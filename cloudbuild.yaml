@@ -1,0 +1,49 @@
+steps:
+- name: "gcr.io/k8s-skaffold/skaffold:v1.0.1"
+  args:
+    [
+      "gcloud",
+      "container",
+      "clusters",
+      "get-credentials",
+      "cicd-sample-k8s-cluster",
+      "--zone",
+      "asia-northeast1-c",
+      "--project",
+      "${PROJECT_ID}",
+    ]
+
+- name: "gcr.io/k8s-skaffold/skaffold:v1.0.1"
+  args:
+    [
+      "skaffold",
+      "run",
+      "-p",
+      "cloudbuild"
+    ]
+
+- name: "gcr.io/cloud-builders/kubectl"
+  args:
+    [
+      "run",
+      "--generator=run-pod/v1",
+      "k6",
+      "--attach=true",
+      "--restart=Never",
+      "--rm",
+      "--image",
+      "gcr.io/<PROJECT_ID>/k6:dirty",
+      "--",
+      "run",
+      "script.js"
+    ]
+  env:
+    - CLOUDSDK_COMPUTE_ZONE=asia-northeast1-c
+    - CLOUDSDK_CONTAINER_CLUSTER=cicd-sample-k8s-cluster
+
+- name: "gcr.io/k8s-skaffold/skaffold:v1.0.1"
+  args:
+    [
+      "skaffold",
+      "delete"
+    ]

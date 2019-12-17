@@ -1,0 +1,25 @@
+apiVersion: skaffold/v1
+kind: Config
+metadata:
+  name: cicd-sample
+build:
+  artifacts:
+  - image: gcr.io/<PROJECT_ID>/cicd-sample-app
+    context: app
+  - image: gcr.io/<PROJECT_ID>/k6
+    context: k6
+deploy:
+  kubectl:
+    manifests:
+    - k8s/app/deployment.yaml
+profiles:
+- name: local
+  build:
+    local:
+      push: false
+  deploy:
+    kubeContext: minikube
+- name: cloudbuild
+  build:
+    googleCloudBuild:
+      projectId: <PROJECT_ID>

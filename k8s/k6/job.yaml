@@ -1,0 +1,26 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k6
+spec:
+  backoffLimit: 0
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      name: k6
+    spec:
+      initContainers:
+      - name: check-app-ready
+        image: nicolaka/netshoot
+        command: ['sh', '-c',
+          'until curl -X GET -LI http://cicd-sample-app.default.svc.cluster.local:8080 -o /dev/null -w "%{http_code}\n" -s | grep -E "^200$";
+          do echo waiting for app; sleep 2; done'
+        ]
+      containers:
+      - name: k6
+        image: gcr.io/<PROJECT_ID>/k6
+        command: ["k6"]
+        args: ["run", "script.js"]
+      restartPolicy: Never
